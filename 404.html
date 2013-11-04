@@ -1,0 +1,341 @@
+<html>
+<head>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+
+<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+
+
+
+
+</head>
+<body style="margin: 0;padding: 0;font-family: 'Open Sans Condensed', sans-serif;color:White;overflow:hidden;">
+	
+	<div id="snakesDiv" style="z-index:1;position: absolute;top:0px; left:0px">
+		<canvas id="canvas" style="margin: 0;padding: 0;"></canvas>
+	</div>
+	
+	<div id="backgroundDiv" style="z-index:9;position: absolute;top:0px; left:100px;width:270px;height:100%;background-color:DEEPSKYBLUE;opacity: 0.9;">
+		<div id="messageDiv" style="z-index:10;position: absolute;top:20%;text-align:center;width:100%;">
+			<span style="font-size: 125pt;">404</span></BR>
+			<span style="font-size: 35pt;">Page Not Found</span></BR></BR>
+			<span style="font-size: 15pt;">Our Snakes Are Looking For Your Page</span>
+		</div>
+	</div>
+	
+	
+<script type="text/javascript">
+
+	var w;
+	var h;
+	
+	//Lets save the cell width in a variable for easy control
+	var cw = 10;
+	var d_red = "down";
+	var d_blue = "down";
+	var d_yellow = "down";
+	var d_green = "down";
+	var growSnake = false;
+
+	
+	//Lets create the snake now
+	var snake_array_red; //an array of cells to make up the snake
+	
+	var snake_array_blue; //an array of cells to make up the snake
+	
+	var snake_array_yellow; //an array of cells to make up the snake
+	
+	var snake_array_green; //an array of cells to make up the snake	
+	
+	
+	var canvas = document.getElementById('canvas');
+	var ctx;
+	
+
+	
+	function init()
+	{
+		AdaptSiteForPortHole();
+	
+		var start_point = w / 2;
+
+		snake_array_red = create_snake(snake_array_red, start_point);
+		snake_array_blue = create_snake(snake_array_blue, start_point);
+		snake_array_yellow = create_snake(snake_array_yellow, start_point);
+		snake_array_green = create_snake(snake_array_green, start_point);
+	
+		//Lets move the snake now using a timer which will trigger the paint function
+		//every 60ms
+		if(typeof game_loop != "undefined") clearInterval(game_loop);
+		 game_loop = setInterval(groupPaint, 60);
+		
+		if(typeof snakeDir != "undefined") clearInterval(snakeDir);
+		snakeDir = setInterval(setDirection, 750);
+		
+		if(typeof resizeCan != "undefined") clearInterval(resizeCan);
+	    resizeCan = setInterval(AdaptSiteForPortHole, 60);
+	}
+
+	
+function AdaptSiteForPortHole ()
+	{
+	
+			if (w != $(window).width() || h != $(window).height())
+			{
+	
+				w = $(window).width();
+				h = $(window).height();
+
+				$("#snakesDiv").css("height",h);
+				$("#snakesDiv").css("width",w);	
+		
+				$("#canvas").css("height",h);
+				$("#canvas").css("width",w);
+				
+				$("#canvas").attr("height",$(window).height());
+				$("#canvas").attr("width",$(window).width());
+			
+			}
+			
+	}
+	
+	
+	function create_snake(snake_array, starting_point)
+	{
+		var length = 1; //Length of the snake
+		snake_array = []; //Empty array to start with
+		for(var i = length-1; i>=0; i--)
+		{
+			//This will create a horizontal snake starting from the top left
+			
+			var xValue = starting_point / cw;
+			
+			snake_array.push({x: xValue, y:0});
+		}
+		
+		return snake_array;
+	}
+	
+	function groupPaint()
+	{
+		resetBackground();
+		
+		paint(snake_array_red, "red");
+		
+		paint(snake_array_blue, "blue");
+				
+		paint(snake_array_yellow, "yellow");
+						
+		paint(snake_array_green, "green");
+		
+		growSnake = false;
+	}
+	
+	
+	function resetBackground()
+	{
+		//To avoid the snake trail we need to paint the BG on every frame
+		//Lets paint the canvas now
+		ctx.fillStyle = "white";
+		ctx.fillRect(0, 0, w, h);
+		ctx.strokeStyle = "black";
+		ctx.strokeRect(0, 0, w, h);
+	}
+	
+	
+	
+	//Lets paint the snake now
+	function paint(snake_array, snakeColor)
+	{
+
+		
+		//The movement code for the snake to come here.
+		//The logic is simple
+		//Pop out the tail cell and place it infront of the head cell
+		var nx = snake_array[0].x;
+		var ny = snake_array[0].y;
+		//These were the position of the head cell.
+		//We will increment it to get the new head position
+		//Lets add proper direction based movement now
+		switch (snakeColor)
+		{
+			case "red":
+				if(d_red == "right") nx++;
+				else if(d_red == "left") nx--;
+				else if(d_red == "up") ny--;
+				else if(d_red == "down") ny++;
+			break;
+			
+			case "blue":
+				if(d_blue == "right") nx++;
+				else if(d_blue == "left") nx--;
+				else if(d_blue == "up") ny--;
+				else if(d_blue == "down") ny++;
+			break;
+			
+			case "yellow":
+				if(d_yellow == "right") nx++;
+				else if(d_yellow == "left") nx--;
+				else if(d_yellow == "up") ny--;
+				else if(d_yellow == "down") ny++;
+			break;
+			
+			case "green":
+				if(d_green == "right") nx++;
+				else if(d_green == "left") nx--;
+				else if(d_green == "up") ny--;
+				else if(d_green == "down") ny++;
+			break;
+		}
+		
+		
+		//Lets add the game over clauses now
+		//This will restart the game if the snake hits the wall
+		//Lets add the code for body collision
+		//Now if the head of the snake bumps into its body, the game will restart
+		if(check_collision(nx, ny, snake_array))
+		{
+			//restart game
+			init();
+			//Lets organize the code a bit now.
+			return;
+		}
+		
+		if (nx < 0) {nx = (w/cw) - 0.01;}
+		
+		if (nx > w/cw) {nx = 0.01;}
+		
+		if (ny < 0) {ny = (h/cw) - 0.01;}
+		
+		if (ny > h/cw) {ny = 0.01;}
+
+		if (growSnake == true)
+		{
+			var tail = {x: nx, y: ny};
+			
+		}
+		else
+		{
+			var tail = snake_array.pop(); //pops out the last cell
+			tail.x = nx; tail.y = ny;
+		}
+		
+		snake_array.unshift(tail); //puts back the tail as the first cell
+		
+		for(var i = 0; i < snake_array.length; i++)
+		{
+			var c = snake_array[i];
+			//Lets paint 10px wide cells
+			paint_cell(c.x, c.y ,snakeColor);
+		}
+
+
+	}		
+	
+	
+//Lets first create a generic function to paint cells
+	function paint_cell(x, y, snakeColor)
+	{
+		ctx.fillStyle = snakeColor;
+		ctx.fillRect(x*cw, y*cw, cw, cw);
+		//ctx.strokeStyle = "blue";
+		//ctx.strokeRect(x*cw, y*cw, cw, cw);
+	}
+	
+	function check_collision(x, y, array)
+	{
+		return false;
+		//This function will check if the provided x/y coordinates exist
+		//in an array of cells or not
+		for(var i = 0; i < array.length; i++)
+		{
+			if(array[i].x == x && array[i].y == y)
+			 return true;
+		}
+		return false;
+	}
+	
+	function randomFromInterval(from,to)
+	{
+		return Math.floor(Math.random()*(to-from+1)+from);
+	}
+	
+
+	
+	function setDirection()
+	{
+		var key = randomFromInterval(37,40);
+		
+		if(key == "37" && d_red != "right") d_red = "left";
+		else if(key == "38" && d_red != "down") d_red = "up";
+		else if(key == "39" && d_red != "left") d_red = "right";
+		else if(key == "40" && d_red != "up") d_red = "down";
+		
+		var key = randomFromInterval(37,40);
+		
+		if(key == "37" && d_blue != "right") d_blue = "left";
+		else if(key == "38" && d_blue != "down") d_blue = "up";
+		else if(key == "39" && d_blue != "left") d_blue = "right";
+		else if(key == "40" && d_blue != "up") d_blue = "down";
+		
+		var key = randomFromInterval(37,40);
+		
+		if(key == "37" && d_yellow != "right") d_yellow = "left";
+		else if(key == "38" && d_yellow != "down") d_yellow = "up";
+		else if(key == "39" && d_yellow != "left") d_yellow = "right";
+		else if(key == "40" && d_yellow != "up") d_yellow = "down";
+		
+		var key = randomFromInterval(37,40);
+		
+		if(key == "37" && d_green != "right") d_green = "left";
+		else if(key == "38" && d_green != "down") d_green = "up";
+		else if(key == "39" && d_green != "left") d_green = "right";
+		else if(key == "40" && d_green != "up") d_green = "down";
+		
+		growSnake = true;
+	}
+	
+
+	
+	
+/*
+
+		//Lets add the keyboard controls now
+	$(document).keydown(function(e){
+		var key = e.which;
+		//We will add another clause to prevent reverse gear
+		if(key == "37" && d != "right") d = "left";
+		else if(key == "38" && d != "down") d = "up";
+		else if(key == "39" && d != "left") d = "right";
+		else if(key == "40" && d != "up") d = "down";
+		//The snake is now keyboard controllable
+	})
+
+	
+		//Lets create the food now
+	function create_food()
+	{
+		food = {
+			x: Math.round(Math.random()*(w-cw)/cw), 
+			y: Math.round(Math.random()*(h-cw)/cw), 
+		};
+		//This will create a cell with x/y between 0-44
+		//Because there are 45(450/10) positions accross the rows and columns
+	}
+
+
+*/	
+	
+	
+$(document).ready(function(){
+
+	ctx = canvas.getContext("2d");
+	
+	init();
+	
+});
+
+</script>
+
+</body>
+</html>
